@@ -10,7 +10,7 @@ create table thoughts (
   embedding_model text not null,
   thread_id text,
   category text not null,
-  category_source text not null default 'auto',
+  category_source text not null default 'auto' check (category_source in ('auto', 'manual')),
   people text[] not null default '{}',
   topics text[] not null default '{}',
   source text not null,
@@ -24,7 +24,7 @@ create table action_items (
   id uuid primary key default gen_random_uuid(),
   thought_id uuid not null references thoughts(id) on delete cascade,
   description text not null,
-  status text not null default 'open',
+  status text not null default 'open' check (status in ('open', 'done', 'tabled')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
