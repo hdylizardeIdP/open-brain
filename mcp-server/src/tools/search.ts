@@ -26,7 +26,7 @@ export async function searchThoughts(
   const embedding = embeddingResponse.data[0].embedding;
 
   const { data, error } = await supabase.rpc("match_thoughts", {
-    query_embedding: embedding,
+    query_embedding: JSON.stringify(embedding),
     match_threshold: 0.3,
     match_count: limit,
     filter_category: category ?? null,
