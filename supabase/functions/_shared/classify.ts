@@ -45,15 +45,47 @@ export async function classifyText(
   }
 
   const data = await response.json();
-  const content = data.choices[0].message.content;
-  const parsed = JSON.parse(content);
+  const rawContent = data?.choices?.[0]?.message?.content;
+
+  if (typeof rawContent !== "string" || !rawContent.trim()) {
+    const truncatedBody = JSON.stringify(data).slice(0, 500);
+    throw new Error(
+      `OpenAI chat API returned no usable content in first choice. Raw response (truncated): ${truncatedBody}`,
+    );
+  }
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(rawContent);
+  } catch (err) {
+    const truncatedContent = rawContent.slice(0, 500);
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Failed to parse OpenAI response JSON: ${message}. Raw content (truncated to 500 chars): ${truncatedContent}`,
+    );
+  }
+
+  const category =
+    typeof parsed.category === "string" && parsed.category.trim()
+      ? parsed.category
+      : "uncategorized";
+
+  const people = Array.isArray(parsed.people)
+    ? parsed.people.filter((p: unknown) => typeof p === "string")
+    : [];
+
+  const topics = Array.isArray(parsed.topics)
+    ? parsed.topics.filter((t: unknown) => typeof t === "string")
+    : [];
+
+  const action_items = Array.isArray(parsed.action_items)
+    ? parsed.action_items.filter((a: unknown) => typeof a === "string")
+    : [];
 
   return {
-    category: parsed.category ?? "uncategorized",
-    people: Array.isArray(parsed.people) ? parsed.people : [],
-    topics: Array.isArray(parsed.topics) ? parsed.topics : [],
-    action_items: Array.isArray(parsed.action_items)
-      ? parsed.action_items
-      : [],
+    category,
+    people,
+    topics,
+    action_items,
   };
 }
