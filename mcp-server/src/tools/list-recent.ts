@@ -4,13 +4,15 @@ import type { Thought } from "../types.js";
 interface ListRecentParams {
   category?: string;
   source?: string;
+  after?: string;
+  before?: string;
   limit?: number;
 }
 
 export async function listRecentThoughts(
   params: ListRecentParams
 ): Promise<Omit<Thought, "embedding">[]> {
-  const { category, source, limit = 20 } = params;
+  const { category, source, after, before, limit = 20 } = params;
 
   let query = supabase
     .from("thoughts")
@@ -25,6 +27,12 @@ export async function listRecentThoughts(
   }
   if (source) {
     query = query.eq("source", source);
+  }
+  if (after) {
+    query = query.gte("created_at", after);
+  }
+  if (before) {
+    query = query.lte("created_at", before);
   }
 
   const { data, error } = await query;

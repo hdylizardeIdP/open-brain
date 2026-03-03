@@ -38,7 +38,21 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  if (token !== config.value) {
+  // Constant-time comparison to prevent timing side-channel
+  const encoder = new TextEncoder();
+  const a = encoder.encode(token);
+  const b = encoder.encode(config.value);
+  if (a.length !== b.length) {
+    return new Response(JSON.stringify({ error: "Invalid token" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a[i] ^ b[i];
+  }
+  if (mismatch !== 0) {
     return new Response(JSON.stringify({ error: "Invalid token" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },

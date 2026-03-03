@@ -88,7 +88,7 @@ Deno.serve(async (req: Request) => {
     source: "slack",
     metadata: {
       slack_channel: channelId,
-      slack_ts: params.get("trigger_id") ?? undefined,
+      slack_ts: req.headers.get("X-Slack-Request-Timestamp") ?? undefined,
     },
   }).catch((err) => {
     console.error(

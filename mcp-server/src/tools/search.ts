@@ -7,6 +7,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 interface SearchParams {
   query: string;
   category?: string;
+  people?: string[];
   after?: string;
   before?: string;
   limit?: number;
@@ -15,7 +16,7 @@ interface SearchParams {
 export async function searchThoughts(
   params: SearchParams
 ): Promise<SearchResult[]> {
-  const { query, category, after, before, limit = 10 } = params;
+  const { query, category, people, after, before, limit = 10 } = params;
 
   const embeddingResponse = await openai.embeddings.create({
     model: "text-embedding-3-small",
@@ -31,6 +32,7 @@ export async function searchThoughts(
     filter_category: category ?? null,
     filter_after: after ?? null,
     filter_before: before ?? null,
+    filter_people: people ?? null,
   });
 
   if (error) {

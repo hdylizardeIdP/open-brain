@@ -20,6 +20,10 @@ server.tool(
       .string()
       .optional()
       .describe("Filter by category (e.g. 'work', 'personal')"),
+    people: z
+      .array(z.string())
+      .optional()
+      .describe("Filter by people mentioned (e.g. ['Sarah', 'Dr. Kim'])"),
     after: z
       .string()
       .optional()
@@ -36,11 +40,12 @@ server.tool(
       .optional()
       .describe("Max number of results (default 10)"),
   },
-  async ({ query, category, after, before, limit }) => {
+  async ({ query, category, people, after, before, limit }) => {
     try {
       const results = await searchThoughts({
         query,
         category,
+        people,
         after,
         before,
         limit,
@@ -67,6 +72,14 @@ server.tool(
       .string()
       .optional()
       .describe("Filter by source (e.g. 'slack', 'cli', 'api', 'mcp')"),
+    after: z
+      .string()
+      .optional()
+      .describe("Only return thoughts after this ISO 8601 date"),
+    before: z
+      .string()
+      .optional()
+      .describe("Only return thoughts before this ISO 8601 date"),
     limit: z
       .number()
       .int()
@@ -75,9 +88,9 @@ server.tool(
       .optional()
       .describe("Max number of results (default 20)"),
   },
-  async ({ category, source, limit }) => {
+  async ({ category, source, after, before, limit }) => {
     try {
-      const results = await listRecentThoughts({ category, source, limit });
+      const results = await listRecentThoughts({ category, source, after, before, limit });
       return {
         content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
       };

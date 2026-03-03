@@ -1,11 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import type { IngestRequest, Thought } from "./types.ts";
+import type { IngestRequest } from "./types.ts";
 import { embedText } from "./embeddings.ts";
 import { classifyText } from "./classify.ts";
 
 export async function ingest(
   req: IngestRequest,
-): Promise<Thought> {
+): Promise<{ id: string }> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -26,50 +26,25 @@ export async function ingest(
   const people = meta.people ?? classification.people;
   const topics = meta.topics ?? classification.topics;
 
-  // Insert thought
-  const thoughtRow = {
-    raw_text: req.text,
-    embedding: JSON.stringify(embedding),
-    embedding_model: embeddingModel,
-    thread_id: meta.thread_id ?? null,
-    category,
-    category_source: categorySource,
-    people,
-    topics,
-    source: req.source,
-    slack_channel: meta.slack_channel ?? null,
-    slack_ts: meta.slack_ts ?? null,
-  };
+  // Atomic insert: thought + action items in a single transaction via RPC
+  const { data: thoughtId, error } = await supabase.rpc("ingest_thought", {
+    p_raw_text: req.text,
+    p_embedding: JSON.stringify(embedding),
+    p_embedding_model: embeddingModel,
+    p_thread_id: meta.thread_id ?? null,
+    p_category: category,
+    p_category_source: categorySource,
+    p_people: people,
+    p_topics: topics,
+    p_source: req.source,
+    p_slack_channel: meta.slack_channel ?? null,
+    p_slack_ts: meta.slack_ts ?? null,
+    p_action_items: classification.action_items,
+  });
 
-  const { data: thought, error: thoughtError } = await supabase
-    .from("thoughts")
-    .insert(thoughtRow)
-    .select()
-    .single();
-
-  if (thoughtError) {
-    throw new Error(`Failed to insert thought: ${thoughtError.message}`);
+  if (error) {
+    throw new Error(`Failed to ingest thought: ${error.message}`);
   }
 
-  // Insert action items if any were extracted
-  const actionItems = classification.action_items;
-  if (actionItems.length > 0) {
-    const actionRows = actionItems.map((description) => ({
-      thought_id: thought.id,
-      description,
-      status: "open",
-    }));
-
-    const { error: actionError } = await supabase
-      .from("action_items")
-      .insert(actionRows);
-
-    if (actionError) {
-      throw new Error(
-        `Thought created but action items failed: ${actionError.message}`,
-      );
-    }
-  }
-
-  return thought as Thought;
+  return { id: thoughtId as string };
 }

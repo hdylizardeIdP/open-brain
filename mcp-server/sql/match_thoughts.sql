@@ -1,5 +1,5 @@
--- Supabase database function for vector similarity search.
--- Run this in the Supabase SQL editor or add to migrations.
+-- Reference copy of functions deployed via migration.
+-- Canonical source: supabase/migrations/20260302000000_initial_schema.sql
 
 create or replace function match_thoughts(
   query_embedding vector(1536),
@@ -7,7 +7,8 @@ create or replace function match_thoughts(
   match_count int,
   filter_category text default null,
   filter_after timestamptz default null,
-  filter_before timestamptz default null
+  filter_before timestamptz default null,
+  filter_people text[] default null
 )
 returns table (
   id uuid,
@@ -47,6 +48,7 @@ begin
     and (filter_category is null or t.category = filter_category)
     and (filter_after is null or t.created_at >= filter_after)
     and (filter_before is null or t.created_at <= filter_before)
+    and (filter_people is null or t.people && filter_people)
   order by t.embedding <=> query_embedding
   limit match_count;
 end;
