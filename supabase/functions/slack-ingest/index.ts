@@ -9,20 +9,26 @@ async function verifySlackSignature(
     throw new Error("SLACK_SIGNING_SECRET not set");
   }
 
-  const timestamp = req.headers.get("X-Slack-Request-Timestamp");
+  const timestampHeader = req.headers.get("X-Slack-Request-Timestamp");
   const slackSignature = req.headers.get("X-Slack-Signature");
 
-  if (!timestamp || !slackSignature) {
+  if (!timestampHeader || !slackSignature) {
+    return false;
+  }
+
+  // Parse and validate timestamp
+  const timestamp = Number(timestampHeader);
+  if (!Number.isFinite(timestamp) || !Number.isInteger(timestamp)) {
     return false;
   }
 
   // Reject requests older than 5 minutes to prevent replay attacks
   const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp)) > 300) {
+  if (Math.abs(now - timestamp) > 300) {
     return false;
   }
 
-  const sigBasestring = `v0:${timestamp}:${body}`;
+  const sigBasestring = `v0:${timestampHeader}:${body}`;
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(signingSecret),
