@@ -6,8 +6,8 @@ create extension if not exists pgcrypto with schema extensions;
 create table thoughts (
   id uuid primary key default gen_random_uuid(),
   raw_text text not null,
-  embedding vector(1536),
-  embedding_model text,
+  embedding vector(1536) not null,
+  embedding_model text not null,
   thread_id text,
   category text not null,
   category_source text not null default 'auto',
