@@ -38,8 +38,12 @@ Added `ActionItemWithThought` interface — extends `ActionItem` with a `thought
 ### Claude Code (WSL) — `~/.claude/settings.json`
 Added `open-brain` entry with `command: "node"`, pointing to `dist/index.js` with env vars inline.
 
-### Claude Desktop (Windows) — `C:\Users\hdyli\AppData\Roaming\Claude\claude_desktop_config.json`
-Added `open-brain` entry using `wsl.exe bash -c` pattern (matching existing servers like postgres, weather). Env vars passed inline in the bash command string. Uses full nvm node path (`/home/hdyli/.nvm/versions/node/v22.19.0/bin/node`).
+### Claude Desktop (Windows) — `C:\Users\<YourWindowsUsername>\AppData\Roaming\Claude\claude_desktop_config.json`
+Added `open-brain` entry using `wsl.exe bash -c` pattern (matching existing servers like postgres, weather). Env vars passed inline in the bash command string. Uses full nvm node path inside WSL (e.g. `~/.nvm/versions/node/<version>/bin/node`).
+
+> **Finding your paths:**
+> - Windows config file: Replace `<YourWindowsUsername>` with the output of `echo %USERNAME%` in a Windows Command Prompt, or check `C:\Users\` in File Explorer.
+> - WSL node path: In your WSL terminal, run `which node` (if using a system install) or `nvm which current` (if using nvm) to get the full path. Example: `/home/<wsl-username>/.nvm/versions/node/v22.19.0/bin/node`.
 
 ### Claude Desktop (Mac) — manual setup required
 Config file: `~/Library/Application Support/Claude/claude_desktop_config.json`. Same shape as WSL config but with `command: "node"` directly (no wsl.exe wrapper). Requires cloning repo and running `npm install && npm run build` on the Mac.
