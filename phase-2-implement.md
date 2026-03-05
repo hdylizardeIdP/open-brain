@@ -7,7 +7,7 @@ Added 3 new MCP tools for action item lifecycle management and thought editing, 
 ## Files created
 
 ### `mcp-server/src/tools/get-action-items.ts`
-Queries `action_items` table with optional filters. Uses `!inner` join on `thoughts` so category filtering applies to the parent thought. Reshapes the Supabase `thoughts` array into a singular `thought` object in output.
+Queries `action_items` table with optional filters. Uses `!inner` join on `thoughts` so category filtering applies to the parent thought. Exposes the Supabase `thoughts` array on a `thought` field in the output (the data remains an array, only the field name changes).
 
 **Params**: `status?` (open|done|tabled), `category?`, `after?`, `before?`, `limit?` (default 20)
 
