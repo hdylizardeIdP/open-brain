@@ -4,7 +4,7 @@ create extension if not exists pgcrypto with schema extensions;
 
 -- thoughts table
 create table thoughts (
-  id uuid primary key default gen_random_uuid(),
+  id uuid primary key default extensions.gen_random_uuid(),
   raw_text text not null,
   embedding vector(1536) not null,
   embedding_model text not null,
@@ -21,7 +21,7 @@ create table thoughts (
 
 -- action_items table
 create table action_items (
-  id uuid primary key default gen_random_uuid(),
+  id uuid primary key default extensions.gen_random_uuid(),
   thought_id uuid not null references thoughts(id) on delete cascade,
   description text not null,
   status text not null default 'open' check (status in ('open', 'done', 'tabled')),
