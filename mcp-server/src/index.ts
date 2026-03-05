@@ -31,12 +31,12 @@ server.tool(
       .string()
       .datetime()
       .optional()
-      .describe("Only return thoughts after this ISO 8601 date"),
+      .describe("Only return thoughts after this ISO 8601 datetime (e.g. 2026-03-05T13:45:00Z)"),
     before: z
       .string()
       .datetime()
       .optional()
-      .describe("Only return thoughts before this ISO 8601 date"),
+      .describe("Only return thoughts before this ISO 8601 datetime (e.g. 2026-03-05T13:45:00Z)"),
     limit: z
       .number()
       .int()
