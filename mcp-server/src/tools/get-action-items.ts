@@ -1,5 +1,20 @@
 import { supabase } from "../db.js";
-import type { ActionItemWithThought } from "../types.js";
+import type { ActionItemWithThought, Thought } from "../types.js";
+
+type ThoughtJoinFields = Omit<
+  Thought,
+  | "embedding"
+  | "embedding_model"
+  | "thread_id"
+  | "source"
+  | "slack_channel"
+  | "slack_ts"
+  | "created_at"
+>;
+
+type ActionItemRow = Omit<ActionItemWithThought, "thought"> & {
+  thoughts: ThoughtJoinFields[];
+};
 
 interface GetActionItemsParams {
   status?: "open" | "done" | "tabled";
@@ -41,10 +56,12 @@ export async function getActionItems(
     throw new Error(`Get action items failed: ${error.message}`);
   }
 
-  return (
-    (data ?? []).map((row: any) => {
+  return (data ?? []).map((row: ActionItemRow): ActionItemWithThought => {
       const { thoughts, ...item } = row;
-      return { ...item, thought: thoughts };
-    }) as ActionItemWithThought[]
-  );
+      const thought = thoughts[0];
+      if (!thought) {
+        throw new Error(`Action item ${item.id} has no associated thought`);
+      }
+      return { ...item, thought };
+    });
 }
