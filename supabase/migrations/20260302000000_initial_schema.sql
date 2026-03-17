@@ -1,5 +1,5 @@
--- Enable extensions
-create extension if not exists vector with schema extensions;
+-- Enable extensions (vector must be in public for unqualified type references)
+create extension if not exists vector with schema public;
 create extension if not exists pgcrypto with schema extensions;
 
 -- thoughts table
@@ -158,4 +158,4 @@ $$;
 insert into system_config (key, value) values
   ('embedding_model', 'text-embedding-3-small'),
   ('embedding_dimensions', '1536'),
-  ('webhook_api_key', encode(gen_random_bytes(32), 'hex'));
+  ('webhook_api_key', encode(extensions.gen_random_bytes(32), 'hex'));

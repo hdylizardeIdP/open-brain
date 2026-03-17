@@ -32,3 +32,7 @@ export interface SystemConfig {
 export interface SearchResult extends Omit<Thought, "embedding"> {
   similarity: number;
 }
+
+export interface ActionItemWithThought extends ActionItem {
+  thought: Omit<Thought, "embedding" | "embedding_model" | "thread_id" | "source" | "slack_channel" | "slack_ts" | "created_at">;
+}

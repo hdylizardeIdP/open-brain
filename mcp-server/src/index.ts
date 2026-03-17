@@ -5,6 +5,9 @@ import { z } from "zod";
 import { searchThoughts } from "./tools/search.js";
 import { listRecentThoughts } from "./tools/list-recent.js";
 import { addThought } from "./tools/add-thought.js";
+import { getActionItems } from "./tools/get-action-items.js";
+import { updateActionItem } from "./tools/update-action-item.js";
+import { updateThought } from "./tools/update-thought.js";
 
 const server = new McpServer({
   name: "open-brain",
@@ -26,12 +29,14 @@ server.tool(
       .describe("Filter by people mentioned (e.g. ['Sarah', 'Dr. Kim'])"),
     after: z
       .string()
+      .datetime()
       .optional()
-      .describe("Only return thoughts after this ISO 8601 date"),
+      .describe("Only return thoughts after this ISO 8601 datetime (e.g. 2026-03-05T13:45:00Z)"),
     before: z
       .string()
+      .datetime()
       .optional()
-      .describe("Only return thoughts before this ISO 8601 date"),
+      .describe("Only return thoughts before this ISO 8601 datetime (e.g. 2026-03-05T13:45:00Z)"),
     limit: z
       .number()
       .int()
@@ -74,10 +79,12 @@ server.tool(
       .describe("Filter by source (e.g. 'slack', 'cli', 'api', 'mcp')"),
     after: z
       .string()
+      .datetime()
       .optional()
       .describe("Only return thoughts after this ISO 8601 date"),
     before: z
       .string()
+      .datetime()
       .optional()
       .describe("Only return thoughts before this ISO 8601 date"),
     limit: z
@@ -120,6 +127,91 @@ server.tool(
   async ({ text, category, thread_id }) => {
     try {
       const result = await addThought({ text, category, thread_id });
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+    }
+  }
+);
+
+server.tool(
+  "get_action_items",
+  "Query action items extracted from thoughts. Returns items with parent thought metadata.",
+  {
+    status: z
+      .enum(["open", "done", "tabled"])
+      .optional()
+      .describe("Filter by status"),
+    category: z
+      .string()
+      .optional()
+      .describe("Filter by parent thought's category"),
+    after: z
+      .string()
+      .datetime()
+      .optional()
+      .describe("Only return items created after this ISO 8601 date"),
+    before: z
+      .string()
+      .datetime()
+      .optional()
+      .describe("Only return items created before this ISO 8601 date"),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .describe("Max number of results (default 20)"),
+  },
+  async ({ status, category, after, before, limit }) => {
+    try {
+      const results = await getActionItems({ status, category, after, before, limit });
+      return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+    }
+  }
+);
+
+server.tool(
+  "update_action_item",
+  "Update an action item's status (open, done, or tabled).",
+  {
+    id: z.string().uuid().describe("Action item UUID"),
+    status: z.enum(["open", "done", "tabled"]).describe("New status"),
+  },
+  async ({ id, status }) => {
+    try {
+      const result = await updateActionItem({ id, status });
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+    }
+  }
+);
+
+server.tool(
+  "update_thought",
+  "Edit a thought's category, people, and/or topics. Sets category_source to 'manual' when category is changed.",
+  {
+    id: z.string().uuid().describe("Thought UUID"),
+    category: z.string().optional().describe("New category"),
+    people: z.array(z.string()).optional().describe("New people list"),
+    topics: z.array(z.string()).optional().describe("New topics list"),
+  },
+  async ({ id, category, people, topics }) => {
+    try {
+      const result = await updateThought({ id, category, people, topics });
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };

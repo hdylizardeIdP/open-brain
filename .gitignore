@@ -5,3 +5,7 @@ dist/
 # Review artifacts
 *.png
 *-feedback-*.md
+
+# Supabase local config
+supabase/config.toml
+supabase/.gitignore
